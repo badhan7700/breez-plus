@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Link } from "expo-router";
 
 export default function Login() {
     const [email, setEmail] = useState("");
@@ -40,6 +41,10 @@ export default function Login() {
             <Pressable style={styles.button} onPress={handleLogin}>
                 <Text style={styles.buttonText}>Sign In</Text>
             </Pressable>
+            <Text style={styles.footerText}>
+                Don't have an account?{"  "}
+                <Link href="/register" style={styles.linkText}>Sign Up</Link>
+            </Text>
         </View>
     );
 }
@@ -79,6 +84,15 @@ const styles = StyleSheet.create({
     buttonText: {
         color: "#2563EB",
         fontSize: 16,
+        fontWeight: "bold",
+    },
+    footerText: {
+        marginTop: 24,
+        color: "#E5E7EB",
+        fontSize: 14,
+    },
+    linkText: {
+        color: "#FFFFFF",
         fontWeight: "bold",
     },
 });
