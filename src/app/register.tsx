@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Alert, Text, TextInput, View, StyleSheet, Pressable } from "react-native";
 import { Link } from "expo-router";
+import { colors } from "../constants/colors";
 
 export default function Register() {
     const [fullName, setFullName] = useState("");
@@ -41,7 +42,7 @@ export default function Register() {
                 value={fullName}
                 onChangeText={setFullName}
                 placeholder="Full Name"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={colors.placeholder}
                 autoCapitalize="words"
             />
             <TextInput
@@ -49,7 +50,7 @@ export default function Register() {
                 value={universityEmail}
                 onChangeText={setUniversityEmail}
                 placeholder="University Email"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={colors.placeholder}
                 keyboardType="email-address"
                 autoCapitalize="none"
             />
@@ -58,7 +59,7 @@ export default function Register() {
                 value={department}
                 onChangeText={setDepartment}
                 placeholder="Department"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={colors.placeholder}
                 autoCapitalize="characters"
 
             />
@@ -67,15 +68,15 @@ export default function Register() {
                 value={password}
                 onChangeText={setPassword}
                 placeholder="Password"
-                placeholderTextColor="#9ca3af"
+                placeholderTextColor={colors.placeholder}
                 secureTextEntry={true}
             />
             <TextInput
                 style={styles.input}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
-                placeholder="confirm Password"
-                placeholderTextColor="#9ca3af"
+                placeholder="Confirm Password"
+                placeholderTextColor={colors.placeholder}
                 secureTextEntry={true}
             />
             <Pressable style={styles.button} onPress={handleSignUp}>
@@ -96,20 +97,20 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "#2563EB",
+        backgroundColor: colors.primary,
     },
     title: {
         fontSize: 40,
         fontWeight: "bold",
-        color: "#FFFFFF",
+        color: colors.white,
     },
     subtitle: {
         fontSize: 16,
-        color: "#E5E7EB",
+        color: colors.textLight,
     },
     input: {
         width: "85%",
-        backgroundColor: "#FFFFFF",
+        backgroundColor: colors.white,
         borderRadius: 12,
         padding: 14,
         fontSize: 16,
@@ -117,24 +118,24 @@ const styles = StyleSheet.create({
     },
     button: {
         width: "85%",
-        backgroundColor: "#FFFFFF",
+        backgroundColor: colors.white,
         borderRadius: 12,
         padding: 16,
         marginTop: 24,
         alignItems: "center",
     },
     buttonText: {
-        color: "#2563EB",
+        color: colors.primary,
         fontSize: 16,
         fontWeight: "bold",
     },
     footerText: {
         marginTop: 24,
-        color: "#E5E7EB",
+        color: colors.textLight,
         fontSize: 14,
     },
     linkText: {
-        color: "#FFFFFF",
+        color: colors.white,
         fontWeight: "bold",
     },
 })

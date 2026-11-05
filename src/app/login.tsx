@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Link } from "expo-router";
+import { colors } from "../constants/colors";
 
 export default function Login() {
     const [email, setEmail] = useState("");
@@ -26,7 +27,7 @@ export default function Login() {
                 value={email}
                 onChangeText={setEmail}
                 placeholder="University Email"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colors.placeholder}
                 keyboardType="email-address"
                 autoCapitalize="none"
             />
@@ -35,7 +36,7 @@ export default function Login() {
                 value={password}
                 onChangeText={setPassword}
                 placeholder="Password"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colors.placeholder}
                 secureTextEntry={true}
             />
             <Pressable style={styles.button} onPress={handleLogin}>
@@ -54,20 +55,20 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "#2563EB",
+        backgroundColor: colors.primary,
     },
     title: {
         fontSize: 40,
         fontWeight: "bold",
-        color: "#FFFFFF",
+        color: colors.white,
     },
     subtitle: {
         fontSize: 16,
-        color: "#E5E7EB",
+        color: colors.textLight,
     },
     input: {
         width: "85%",
-        backgroundColor: "#FFFFFF",
+        backgroundColor: colors.white,
         borderRadius: 12,
         padding: 14,
         fontSize: 16,
@@ -75,24 +76,24 @@ const styles = StyleSheet.create({
     },
     button: {
         width: "85%",
-        backgroundColor: "#FFFFFF",
+        backgroundColor: colors.white,
         borderRadius: 12,
         padding: 16,
         marginTop: 24,
         alignItems: "center",
     },
     buttonText: {
-        color: "#2563EB",
+        color: colors.primary,
         fontSize: 16,
         fontWeight: "bold",
     },
     footerText: {
         marginTop: 24,
-        color: "#E5E7EB",
+        color: colors.textLight,
         fontSize: 14,
     },
     linkText: {
-        color: "#FFFFFF",
+        color: colors.white,
         fontWeight: "bold",
     },
 });
