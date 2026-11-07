@@ -1,141 +1,117 @@
-
+import { router } from "expo-router";
 import { useState } from "react";
-import { Alert, Text, TextInput, View, StyleSheet, Pressable } from "react-native";
-import { Link } from "expo-router";
-import { colors } from "../constants/colors";
+import { AppButton } from "../components/AppButton";
+import { AppInput } from "../components/AppInput";
+import { AuthFooter } from "../components/AuthFooter";
+import { AuthLayout } from "../components/AuthLayout";
+import { supabase } from "../lib/supabase";
+import { showAlert } from "../utils/showAlert";
+import { isUniversityEmail, UNIVERSITY_DOMAIN } from "../utils/validation";
 
 export default function Register() {
-    const [fullName, setFullName] = useState("");
-    const [universityEmail, setUniversityEmail] = useState("");
-    const [department, setDepartment] = useState("");
-    const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [universityEmail, setUniversityEmail] = useState("");
+  const [department, setDepartment] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-    const handleSignUp = () => {
-        if (fullName === "" || universityEmail === "" || department === "" || password === "" || confirmPassword === "") {
-            Alert.alert("Error", "Please fill in all fields");
-            return;
-        }
-        if (!universityEmail.endsWith("@eastdelta.edu.bd")) {
-            Alert.alert("Error", "Please fill a valid Email");
-            return;
-        }
-        if (password.length < 6) {
-            Alert.alert("Error", "Password must be at least 6 characters");
-            return;
-        }
-        if (password !== confirmPassword) {
-            Alert.alert("Error", "Passwords do not match");
-            return;
-        }
+  const handleSignUp = async () => {
+    // 1. Check the form before talking to the server
+    if (
+      fullName.trim() === "" ||
+      universityEmail.trim() === "" ||
+      department.trim() === "" ||
+      password === "" ||
+      confirmPassword === ""
+    ) {
+      showAlert("Error", "Please fill in all fields");
+      return;
+    }
+    if (!isUniversityEmail(universityEmail)) {
+      showAlert("Error", `Please use your ${UNIVERSITY_DOMAIN} email`);
+      return;
+    }
+    if (password.length < 6) {
+      showAlert("Error", "Password must be at least 6 characters");
+      return;
+    }
+    if (password !== confirmPassword) {
+      showAlert("Error", "Passwords do not match");
+      return;
+    }
 
-        Alert.alert("Success", `Account created for ${fullName}`)
-    };
+    // 2. Create the account. full_name and department travel as "metadata";
+    //    the database trigger copies them into the profiles table.
+    setLoading(true);
+    const { data, error } = await supabase.auth.signUp({
+      email: universityEmail.trim().toLowerCase(),
+      password,
+      options: {
+        data: {
+          full_name: fullName.trim(),
+          department: department.trim(),
+        },
+      },
+    });
+    setLoading(false);
 
+    if (error) {
+      showAlert("Sign up failed", error.message);
+      return;
+    }
 
-    return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Join Breez+</Text>
-            <Text style={styles.subtitle}>Create your account to start sharing</Text>
-            <TextInput
-                style={styles.input}
-                value={fullName}
-                onChangeText={setFullName}
-                placeholder="Full Name"
-                placeholderTextColor={colors.placeholder}
-                autoCapitalize="words"
-            />
-            <TextInput
-                style={styles.input}
-                value={universityEmail}
-                onChangeText={setUniversityEmail}
-                placeholder="University Email"
-                placeholderTextColor={colors.placeholder}
-                keyboardType="email-address"
-                autoCapitalize="none"
-            />
-            <TextInput
-                style={styles.input}
-                value={department}
-                onChangeText={setDepartment}
-                placeholder="Department"
-                placeholderTextColor={colors.placeholder}
-                autoCapitalize="characters"
+    // 3. If email confirmation is on, there is no session yet:
+    //    the user must click the link in their email first.
+    if (!data.session) {
+      showAlert(
+        "Check your email",
+        `We sent a confirmation link to ${universityEmail.trim()}. Open it, then sign in.`,
+      );
+      router.replace("/login");
+    }
+    // If there IS a session, the layout moves to /home automatically.
+  };
 
-            />
-            <TextInput
-                style={styles.input}
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Password"
-                placeholderTextColor={colors.placeholder}
-                secureTextEntry={true}
-            />
-            <TextInput
-                style={styles.input}
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                placeholder="Confirm Password"
-                placeholderTextColor={colors.placeholder}
-                secureTextEntry={true}
-            />
-            <Pressable style={styles.button} onPress={handleSignUp}>
-                <Text style={styles.buttonText} >Create Account</Text>
-            </Pressable>
-
-            <Text style={styles.footerText}>
-                Already have an account?{"  "}
-                <Link href="/login" style={styles.linkText}>Login</Link>
-            </Text>
-
-        </View>
-    )
+  return (
+    <AuthLayout title="Join Breez+" subtitle="Create your account to start sharing">
+      <AppInput
+        value={fullName}
+        onChangeText={setFullName}
+        placeholder="Full Name"
+        autoCapitalize="words"
+        autoComplete="name"
+      />
+      <AppInput
+        value={universityEmail}
+        onChangeText={setUniversityEmail}
+        placeholder="University Email"
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoComplete="email"
+      />
+      <AppInput
+        value={department}
+        onChangeText={setDepartment}
+        placeholder="Department (e.g. CSE)"
+        autoCapitalize="characters"
+      />
+      <AppInput
+        value={password}
+        onChangeText={setPassword}
+        placeholder="Password"
+        secureTextEntry={true}
+        autoComplete="new-password"
+      />
+      <AppInput
+        value={confirmPassword}
+        onChangeText={setConfirmPassword}
+        placeholder="Confirm Password"
+        secureTextEntry={true}
+        autoComplete="new-password"
+      />
+      <AppButton title="Create Account" onPress={handleSignUp} loading={loading} />
+      <AuthFooter text="Already have an account?" linkText="Sign In" href="/login" />
+    </AuthLayout>
+  );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: colors.primary,
-    },
-    title: {
-        fontSize: 40,
-        fontWeight: "bold",
-        color: colors.white,
-    },
-    subtitle: {
-        fontSize: 16,
-        color: colors.textLight,
-    },
-    input: {
-        width: "85%",
-        backgroundColor: colors.white,
-        borderRadius: 12,
-        padding: 14,
-        fontSize: 16,
-        marginTop: 16,
-    },
-    button: {
-        width: "85%",
-        backgroundColor: colors.white,
-        borderRadius: 12,
-        padding: 16,
-        marginTop: 24,
-        alignItems: "center",
-    },
-    buttonText: {
-        color: colors.primary,
-        fontSize: 16,
-        fontWeight: "bold",
-    },
-    footerText: {
-        marginTop: 24,
-        color: colors.textLight,
-        fontSize: 14,
-    },
-    linkText: {
-        color: colors.white,
-        fontWeight: "bold",
-    },
-})

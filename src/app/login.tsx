@@ -1,99 +1,62 @@
 import { useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { Link } from "expo-router";
-import { colors } from "../constants/colors";
+import { AppButton } from "../components/AppButton";
+import { AppInput } from "../components/AppInput";
+import { AuthFooter } from "../components/AuthFooter";
+import { AuthLayout } from "../components/AuthLayout";
+import { supabase } from "../lib/supabase";
+import { showAlert } from "../utils/showAlert";
+import { isUniversityEmail, UNIVERSITY_DOMAIN } from "../utils/validation";
 
 export default function Login() {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-    const handleLogin = () => {
-        if (email === "" || password === "") {
-            Alert.alert("Error", "Please fill in all fields");
-            return;
-        }
-        if (!email.endsWith("@eastdelta.edu.bd")) {
-            Alert.alert("Error", "Please fill a valid Email");
-            return;
-        }
-        Alert.alert("Login", `Email: ${email}`);
-    };
-    return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Welcome Back</Text>
-            <Text style={styles.subtitle}>Sign in to your Breez+ account</Text>
-            <TextInput
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="University Email"
-                placeholderTextColor={colors.placeholder}
-                keyboardType="email-address"
-                autoCapitalize="none"
-            />
-            <TextInput
-                style={styles.input}
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Password"
-                placeholderTextColor={colors.placeholder}
-                secureTextEntry={true}
-            />
-            <Pressable style={styles.button} onPress={handleLogin}>
-                <Text style={styles.buttonText}>Sign In</Text>
-            </Pressable>
-            <Text style={styles.footerText}>
-                Don't have an account?{"  "}
-                <Link href="/register" style={styles.linkText}>Sign Up</Link>
-            </Text>
-        </View>
-    );
+  const handleLogin = async () => {
+    // 1. Check the form before talking to the server
+    if (email.trim() === "" || password === "") {
+      showAlert("Error", "Please fill in all fields");
+      return;
+    }
+    if (!isUniversityEmail(email)) {
+      showAlert("Error", `Please use your ${UNIVERSITY_DOMAIN} email`);
+      return;
+    }
+
+    // 2. Ask Supabase to sign in
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    });
+    setLoading(false);
+
+    // 3. On success there is nothing to do here: the layout sees the new
+    //    session and moves to /home automatically.
+    if (error) {
+      showAlert("Sign in failed", error.message);
+    }
+  };
+
+  return (
+    <AuthLayout title="Welcome Back" subtitle="Sign in to your Breez+ account">
+      <AppInput
+        value={email}
+        onChangeText={setEmail}
+        placeholder="University Email"
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoComplete="email"
+      />
+      <AppInput
+        value={password}
+        onChangeText={setPassword}
+        placeholder="Password"
+        secureTextEntry={true}
+        autoComplete="password"
+      />
+      <AppButton title="Sign In" onPress={handleLogin} loading={loading} />
+      <AuthFooter text="Don't have an account?" linkText="Sign Up" href="/register" />
+    </AuthLayout>
+  );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: colors.primary,
-    },
-    title: {
-        fontSize: 40,
-        fontWeight: "bold",
-        color: colors.white,
-    },
-    subtitle: {
-        fontSize: 16,
-        color: colors.textLight,
-    },
-    input: {
-        width: "85%",
-        backgroundColor: colors.white,
-        borderRadius: 12,
-        padding: 14,
-        fontSize: 16,
-        marginTop: 16,
-    },
-    button: {
-        width: "85%",
-        backgroundColor: colors.white,
-        borderRadius: 12,
-        padding: 16,
-        marginTop: 24,
-        alignItems: "center",
-    },
-    buttonText: {
-        color: colors.primary,
-        fontSize: 16,
-        fontWeight: "bold",
-    },
-    footerText: {
-        marginTop: 24,
-        color: colors.textLight,
-        fontSize: 14,
-    },
-    linkText: {
-        color: colors.white,
-        fontWeight: "bold",
-    },
-});

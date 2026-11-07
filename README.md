@@ -1,56 +1,124 @@
-# Welcome to your Expo app 👋
+# Breez+
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**A study-material sharing app for university students: share your notes, earn coins, spend them on other people's notes.**
 
-## Get started
+Built with React Native (Expo), TypeScript and Supabase. Only students with an `@eastdelta.edu.bd` email can join.
 
-1. Install dependencies
+> 🚧 **Status: in active development.** Authentication and user profiles are complete; resource sharing is next. See the [roadmap](#roadmap).
 
-   ```bash
-   npm install
-   ```
+<p align="center">
+  <img src="docs/screenshots/welcome.png" width="200" alt="Welcome screen" />
+  <img src="docs/screenshots/login.png" width="200" alt="Login screen" />
+  <img src="docs/screenshots/register.png" width="200" alt="Register screen" />
+  <img src="docs/screenshots/home.png" width="200" alt="Home screen" />
+</p>
 
-2. Start the app
+## The idea
 
-   ```bash
-   npx expo start
-   ```
+At my university, notes, slides and past papers are scattered across group chats and lost every semester. Breez+ gives them one home, and a small coin economy keeps it fair: you earn coins by uploading and spend them by downloading, so people share instead of only taking.
 
-In the output, you'll find options to open the app in a
+## Features
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+**Done**
 
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- Sign up and sign in with email and password (Supabase Auth)
+- University-only access: `@eastdelta.edu.bd` is checked in the app **and** in the database
+- A profile is created automatically on sign-up (name, department, 50 starting coins)
+- Users stay signed in after closing the app; signed-in and signed-out screens are protected routes
+- Form validation with clear error messages; works on iOS, Android and web
 
-## Get a fresh project
+**Planned**
 
-When you're ready, run:
+- Upload PDFs, slides and images (+5 coins)
+- Browse, search and filter by course code and semester
+- Download resources (−3 coins), handled in a single database transaction
+- Ratings, badges, notifications and a weekly leaderboard
+- AI-generated summaries of uploaded PDFs
+
+## Tech stack
+
+| Area | Technology |
+| --- | --- |
+| App | React Native, Expo SDK 58, Expo Router (file-based navigation) |
+| Language | TypeScript |
+| Backend | Supabase: PostgreSQL, Auth, Row Level Security |
+| Quality | ESLint, TypeScript strict mode |
+
+## How sign-up works
+
+1. The app validates the form, then calls `supabase.auth.signUp()` with the user's name and department as metadata.
+2. Supabase Auth creates the account and (if enabled) sends a confirmation email.
+3. A PostgreSQL trigger, `handle_new_user`, runs on the new `auth.users` row: it rejects any email outside `@eastdelta.edu.bd`, then inserts the matching row into `public.profiles`.
+4. The app listens for auth changes in a React context. When a session appears, the protected routes in `src/app/_layout.tsx` move the user to the home screen; when it disappears, back to the welcome screen.
+
+## Security decisions
+
+- **Row Level Security** on `profiles`: a user can read and update only their own row.
+- **Column-level permissions**: users may update only `full_name` and `department`. Coins can never be changed from the app, only by trusted database functions.
+- **No insert policy**: profiles are created only by the `security definer` trigger, never by the client.
+- **Server-side domain check**: the app's email check can be bypassed, so the database enforces it too.
+- **Keys**: the app ships only the Supabase *publishable* key. The `.env` file is git-ignored.
+
+## The story behind this version
+
+The first version of Breez was generated with an AI app builder. It looked finished, but when I tested it against a real Supabase project, I found that:
+
+- sign-up never created a profile, because the `profiles` table had no insert policy (the app showed "Welcome, undefined" and the API returned `406`);
+- any user could set their own coin balance to any number, because the update policy covered every column;
+- notifications, badges and ratings silently failed, because their database functions ran with the caller's permissions and were blocked by RLS.
+
+Instead of patching code I didn't understand, I started over and am rebuilding Breez+ one feature at a time, with the database designed by hand. The old version is kept at [badhan7700/Breez](https://github.com/badhan7700/Breez) for comparison.
+
+## Getting started
+
+**Requirements:** Node.js 22.13+ (or 24.3+), a free [Supabase](https://supabase.com) project, and the [Expo Go](https://expo.dev/go) app on your phone.
 
 ```bash
-npm run reset-project
+git clone https://github.com/badhan7700/breez-plus.git
+cd breez-plus
+npm install
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+1. In Supabase, open **SQL Editor** and run [`supabase/migrations/20261107000000_profiles.sql`](supabase/migrations/20261107000000_profiles.sql).
+2. Copy `.env.example` to `.env` and fill in your project URL and publishable key.
+3. Start the app and scan the QR code with Expo Go (or press `w` for the web):
 
-### Other setup steps
+```bash
+npx expo start
+```
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+Other commands: `npm run lint`, `npm run typecheck`.
 
-## Learn more
+## Project structure
 
-To learn more about developing your project with Expo, look at the following resources:
+```
+src/
+├── app/              Screens (each file is a route)
+│   ├── _layout.tsx   Navigation + protected routes
+│   ├── index.tsx     Welcome
+│   ├── login.tsx
+│   ├── register.tsx
+│   └── home.tsx      Signed-in home
+├── components/       Reusable UI: AppButton, AppInput, AuthLayout, AuthFooter
+├── context/          AuthContext: who is signed in
+├── lib/              Supabase client
+├── constants/        Colours
+├── types/            TypeScript types for database rows
+└── utils/            Validation and alert helpers
+supabase/migrations/  Database schema, RLS policies and triggers
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Roadmap
 
-## Join the community
+| Phase | Scope | Status |
+| --- | --- | --- |
+| 1 | Screens, navigation, shared components | ✅ Done |
+| 2 | Supabase auth, profiles, RLS | ✅ Done |
+| 3 | Upload resources (Supabase Storage) | ⏳ Next |
+| 4 | Browse, search, download, coin transactions | Planned |
+| 5 | Ratings, badges, notifications, profile page | Planned |
+| 6 | Course codes, leaderboard, AI summaries | Planned |
 
-Join our community of developers creating universal apps.
+## Author
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+**Badhan** · [github.com/badhan7700](https://github.com/badhan7700)
