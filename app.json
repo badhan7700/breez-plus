@@ -20,7 +20,7 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "output": "server",
+      "output": "signal",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
